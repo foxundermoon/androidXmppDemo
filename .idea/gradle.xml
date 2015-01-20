@@ -8,8 +8,8 @@
         <option name="gradleHome" value="E:/develop/server/wwwroot/gradle/gradle-2.1" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$/.." />
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/XmppDemoUI" />
           </set>
         </option>
       </GradleProjectSettings>

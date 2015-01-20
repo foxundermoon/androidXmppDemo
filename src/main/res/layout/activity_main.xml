@@ -15,21 +15,6 @@
         <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="连接"
-                android:id="@+id/button2"/>
-        <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="停止"
-                android:id="@+id/button3"/>
-        <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="设置"
-                android:id="@+id/button4"/>
-        <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
                 android:text="http"
                 android:id="@+id/startHcActivity"/>
     </LinearLayout>
@@ -67,6 +52,7 @@
                 android:text="New Text"
                 android:id="@+id/textView"
                 android:scrollbars="vertical"
+                android:textColor="#ccb"
                 android:layout_marginTop="10dp" android:minHeight="100dp"/>
         <ImageView
                 android:layout_width="wrap_content"

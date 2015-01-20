@@ -12,7 +12,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
 
     <application
         android:name="com.swgis.android.xmpp.MyApplication"
@@ -30,8 +30,8 @@
             </intent-filter>
         </activity>
         <activity
-                android:name="com.swgis.android.xmpp.activity.HcActivity"
-                android:label="@string/title_activity_hc" >
+            android:name="com.swgis.android.xmpp.activity.HcActivity"
+            android:label="@string/title_activity_hc" >
         </activity>
         <activity android:name="com.swgis.android.xmpp.activity.DemoAppActivity" />
         <activity android:name="com.swgis.android.xmpp.client.NotificationSettingsActivity" />
@@ -45,9 +45,20 @@
         </service>
         <service android:name="com.swgis.android.xmpp.service.XmppService" />
 
-        <receiver android:name="com.swgis.android.xmpp.client.NotificationReceiver" />
-
-
+        <receiver android:name="com.swgis.android.xmpp.client.receiver.NotificationReceiver" />
+        <!-- <receiver -->
+        <!-- android:name="com.swgis.android.xmpp.client.receiver.XmppStatusReceiver" -->
+        <!-- android:enabled="true" -->
+        <!-- android:exported="true" > -->
+        <!-- </receiver> -->
+        <activity
+            android:name="com.swgis.android.xmpp.activity.LoginActivity"
+            android:label="@string/title_activity_login" >
+        </activity>
+        <activity
+            android:name="com.swgis.android.xmpp.activity.RegisterActivity"
+            android:label="@string/title_activity_register" >
+        </activity>
     </application>
 
 </manifest>

@@ -5,6 +5,7 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.ActionBarActivity;
+import android.text.method.ScrollingMovementMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -16,6 +17,10 @@ import android.widget.TextView;
 import com.swgis.android.xmpp.MyApplication;
 import com.swgis.android.xmpp.R;
 import com.swgis.android.xmpp.client.*;
+import com.swgis.android.xmpp.client.listener.MessagePacketListener;
+import com.swgis.android.xmpp.client.listener.PresencePacketListener;
+import com.swgis.android.xmpp.client.receiver.ReceivePacketReceiver;
+import com.swgis.android.xmpp.client.receiver.XmppStatusReceiver;
 import com.swgis.android.xmpp.config.XmppConfig;
 import com.swgis.android.xmpp.http.MyHttpClient;
 import org.apache.http.client.methods.HttpPostHC4;
@@ -24,6 +29,7 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtilsHC4;
 import org.jivesoftware.smack.packet.Message;
+import org.jivesoftware.smack.packet.Presence;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
@@ -31,15 +37,17 @@ import java.io.InputStream;
 import java.util.UUID;
 
 
-public class MainActivity extends ActionBarActivity implements ReceiverMessageBroadcastReceiver.MessageProcesser {
+public class MainActivity extends ActionBarActivity implements MessagePacketListener.MessageHandler,PresencePacketListener.PresenceHandler {
     Holder holder;
     View.OnClickListener listener;
     private ServiceManager serviceManager;
     NotificationService notificationService;
+    XmppStatusReceiver xmppStatusReceiver;
     //    MyHttpClient httpClient;
     String uploadUrl = "http://10.80.5.222:2222/Upload";
     Handler handler;
-    private ReceiverMessageBroadcastReceiver receiverMessageReceiver;
+    XmppStatusReceiver.StatusHandler statusHandler;
+    private ReceivePacketReceiver receiverMessageReceiver;
     private com.swgis.android.xmpp.http.MyHttpClient httpClient;
 
     @Override
@@ -48,47 +56,72 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
         httpClient = MyHttpClient.getInstance();
         setContentView(R.layout.activity_main);
         holder = new Holder();
-        handler = new Handler() {
-            @Override
-            public void handleMessage(android.os.Message msg) {
-                if (msg.what == 007) {
-                    //do sth
-                }
-            }
-        };
+        handler = new Handler() ;
+//        {
+//            @Override
+//            public void handleMessage(android.os.Message msg) {
+//                if (msg.what == 007) {
+//                    //do sth
+//                }
+//                switch (msg.what){
+//                    case 007:
+//
+//                }
+//            }
+//        };
         holder.sendBtn = (Button) findViewById(R.id.sendBtn);
         holder.etxt = (EditText) findViewById(R.id.editText);
         holder.txtView = (TextView) findViewById(R.id.textView);
-        holder.startBtn = (Button) findViewById(R.id.button2);
-        holder.stopBtn = (Button) findViewById(R.id.button3);
-        holder.settingBtn = (Button) findViewById(R.id.button4);
+        holder.txtView.setMovementMethod(ScrollingMovementMethod.getInstance());
+//        holder.startBtn = (Button) findViewById(R.id.button2);
+//        holder.stopBtn = (Button) findViewById(R.id.button3);
+//        holder.settingBtn = (Button) findViewById(R.id.button4);
         holder.sendImage = (Button) findViewById(R.id.button5);
         holder.imageView = (ImageView) findViewById(R.id.imageView);
         holder.startHcActivity = (Button) findViewById(R.id.startHcActivity);
 //        httpClient = MyHttpClient.getInstance();
+        statusHandler = new MainXmppStatusHandler();
+        MessagePacketListener.getInstance().setMessageHandler(this);
+        PresencePacketListener.getInstance().setPresenceHandler(this);
         registerBtnListener();
-        registerMessageReceiver();
-//        ActivityManager activityManager = (ActivityManager)getSystemService(Context.ACTIVITY_SERVICE);
-
-//        notificationService =(NotificationService)activityManager.getRunningServices()
+        registerXmppStatusReceiver();
+        if (!checkIsLogin()) {
+            startActivity(new Intent(this, LoginActivity.class));
+        }
     }
 
-    private void registerMessageReceiver() {
-        receiverMessageReceiver = new ReceiverMessageBroadcastReceiver((MyApplication) getApplication(), this);
+    private boolean checkIsLogin() {
+        MyApplication myApplication = MyApplication.getInstance();
+        if (myApplication.isLogin)
+            return true;
+        else
+            return false;
+    }
+
+
+    private void registerXmppStatusReceiver() {
+        xmppStatusReceiver = new XmppStatusReceiver(statusHandler);
         IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Constants.RECEIVER_MESSAGE);
-        registerReceiver(receiverMessageReceiver, intentFilter);
+        intentFilter.addAction(Constants.ACTION_XMPP_STATUS);
+        registerReceiver(xmppStatusReceiver, intentFilter);
+
+
+    }
+
+    private void unregisterXmppStatusReceiver() {
+        unregisterReceiver(xmppStatusReceiver);
     }
 
     @Override
     protected void onDestroy() {
-        unRegisterMessageReceiver();
+        unregisterMessageReceiver();
+        unregisterXmppStatusReceiver();
         handler.getLooper().quit();
         handler = null;
         super.onDestroy();
     }
 
-    private void unRegisterMessageReceiver() {
+    private void unregisterMessageReceiver() {
         unregisterReceiver(receiverMessageReceiver);
     }
 
@@ -117,7 +150,8 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
                     if (serviceState.isStart) {
                         holder.txtView.setText("was started!");
                     } else {
-                        serviceManager = new ServiceManager(MainActivity.this);
+//                        serviceManager = new ServiceManager(MainActivity.this);
+                        if (serviceManager == null) serviceManager = ServiceManager.getInstance(MainActivity.this);
                         serviceManager.setNotificationIcon(R.drawable.ic_launcher);
                         serviceManager.startService();
                         serviceState.isStart = true;
@@ -138,15 +172,16 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
                 if (v == holder.sendImage) {
                     sendImage(holder.etxt.getText().toString());
                 }
-                if(v==holder.sendBtn){
-                    NotificationIQ notificationIQ = new NotificationIQ();
-                    notificationIQ.setFrom("1@10.80.5.222");
-                    notificationIQ.setTo("0@10.80.5.222");
-                    notificationIQ.setId(UUID.randomUUID().toString());
-                    notificationIQ.setMessage("message from android client");
-                    notificationIQ.setTitle("the title");
-                    holder.txtView.setText(notificationIQ.toXML());
-                    MyApplication.getInstance().sendPacketByXmpp(notificationIQ);
+                if (v == holder.sendBtn) {
+                    sendMessage(holder.etxt.getText().toString());
+//                    NotificationIQ notificationIQ = new NotificationIQ();
+//                    notificationIQ.setFrom("1@10.80.5.222");
+//                    notificationIQ.setTo("0@10.80.5.222");
+//                    notificationIQ.setId(UUID.randomUUID().toString());
+//                    notificationIQ.setMessage("message from android client");
+//                    notificationIQ.setTitle("the title");
+//                    holder.txtView.setText(notificationIQ.toXML());
+//                    MyApplication.getInstance().sendPacketByXmpp(notificationIQ);
                 }
                 if (v == holder.startHcActivity) {
                     startHcActivity();
@@ -179,7 +214,7 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
                     CloseableHttpClient hc = httpClient.getHttpClient();
                     String boundary = httpClient.creatBoundary();
                     MultipartEntityBuilder multipartEntityBuilder = httpClient.getDefaultmultipartEntityBuilder()
-                            .addBinaryBody("inputStream", is, ContentType.create("image/jpeg"), "cat.jpg")
+                            //.addBinaryBody("inputStream", is, ContentType.create("image/jpeg"), "cat.jpg")
                             .addBinaryBody("byteArray", byteArrayOutputStream.toByteArray(), ContentType.create("image/jpeg"), "cat.jpg")
                             .addTextBody("text", "the text from textBody..............")
                             .setBoundary(boundary);
@@ -189,16 +224,17 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
                     httpPostHC4.setEntity(multipartEntityBuilder.build());
                     final String response = EntityUtilsHC4.toString(hc.execute(httpPostHC4).getEntity());
                     Log.d("httpclient", "post file response:" + response);
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("text", s).put("img", response);
-                    Message message = new Message();
-                    message.setTo("0@10.80.50.222");
-                    message.setFrom("1@10.80.5.222");
-                    message.setBody(jsonObject.toString());
+//                    JSONObject jsonObject = new JSONObject();
+//                    jsonObject.put("text", s).put("img", response);
+//                    Message message = new Message();
+//                    message.setTo("0@10.80.50.222");
+//                    message.setFrom("1@10.80.5.222");
+//                    message.setBody(jsonObject.toString());
 //                    MyApplication.getInstance().sendPacketByXmpp(message);
                     handler.post(new Runnable() {
                         @Override
                         public void run() {
+                            sendMessage(response);
                             holder.txtView.append(response);
                         }
                     });
@@ -233,17 +269,8 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
         String to = ((TextView) findViewById(R.id.editText2)).getText().toString();
         message.setTo(to + "@10.80.5.222");
         message.setFrom("1@10.80.5.222");
-        message.setBody("hello ni hao");
-        Intent intent = new Intent();
-        intent.setAction(Constants.SEND_MESSAGE);
-        Bundle bundle = new Bundle();
-        String uuid = UUID.randomUUID().toString();
-        MyApplication myApplication = (MyApplication) getApplication();
-        myApplication.shareMap.put(uuid, message);
-//        bundle.putCharSequence(Constants.SEND_MESSAGE,uuid);
-        intent.putExtra(Constants.SEND_MESSAGE, uuid);
-        sendBroadcast(intent);
-
+        message.setBody(s);
+        MyApplication.getInstance().sendPacketByXmpp(message);
     }
 
 
@@ -267,8 +294,48 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
     }
 
     @Override
-    public void onReceive(Message message) {
-        holder.txtView.append(message.toXML());
+    public void onMessage(final Message message) {
+        handler.post(new Runnable() {
+            @Override
+            public void run() {
+                holder.txtView.append(message.getFrom()+"\n"+message.getBody()+"\n\n");
+            }
+        });
+    }
+
+    @Override
+    public void onPresence(Presence presence) {
+
+    }
+
+    private class MainXmppStatusHandler implements XmppStatusReceiver.StatusHandler {
+        @Override
+        public void handle(Intent intent) {
+            final int code = intent.getIntExtra(Constants.XMPP_STATUS, 0);
+            final String detail = intent.getStringExtra(Constants.XMPP_STATUS_DETAIL);
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    appendMessage(code + detail == "" ? ":" : detail);
+                }
+            });
+        }
+
+        @Override
+        public void onLogin(boolean success) {
+
+        }
+
+        @Override
+        public void onXmppError(Intent intent) {
+
+        }
+    }
+
+    private void appendMessage(String msg) {
+        try{
+            holder.txtView.append(msg);
+        }catch (Exception ignore){};
     }
 
     class Holder {
@@ -285,9 +352,9 @@ public class MainActivity extends ActionBarActivity implements ReceiverMessageBr
 
         public void setOnclickListener(View.OnClickListener listener) {
             sendBtn.setOnClickListener(listener);
-            startBtn.setOnClickListener(listener);
-            stopBtn.setOnClickListener(listener);
-            settingBtn.setOnClickListener(listener);
+//            startBtn.setOnClickListener(listener);
+//            stopBtn.setOnClickListener(listener);
+//            settingBtn.setOnClickListener(listener);
             sendImage.setOnClickListener(listener);
             startHcActivity.setOnClickListener(listener);
         }

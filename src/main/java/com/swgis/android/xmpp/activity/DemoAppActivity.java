@@ -45,9 +45,9 @@ public class DemoAppActivity extends Activity {
         });
 
 //        Start the service
-        ServiceManager serviceManager = new ServiceManager(this);
-        serviceManager.setNotificationIcon(R.drawable.ic_launcher);
-        serviceManager.startService();
+//       ServiceManager serviceManager = new ServiceManager(this);
+//        serviceManager.setNotificationIcon(R.drawable.ic_launcher);
+//        serviceManager.startService();
     }
 
 }

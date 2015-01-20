@@ -56,8 +56,8 @@ dependencies {
 //    compile group: 'org.apache.httpcomponents', name: 'httpclient-android', version: '4.3.5'
 
     //    compile fileTree(dir: 'libs', include: ['*.aar'])
-    compile 'com.android.support:appcompat-v7:21.0.0'
+    //    compile 'org.igniterealtime.smack:smack-android:4.1.0-alpha5'
+    compile 'com.android.support:appcompat-v7:21.0.3'
     compile 'org.apache.httpcomponents:httpmime:4.3.5'
     compile 'org.apache.httpcomponents:httpclient-android:4.3.5'
-//    compile 'org.igniterealtime.smack:smack-android:4.1.0-alpha5'
 }

@@ -22,6 +22,11 @@ import android.os.IBinder;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import com.swgis.android.xmpp.client.daemon.HeartThreadRunnable;
+import com.swgis.android.xmpp.client.listener.PhoneStateChangeListener;
+import com.swgis.android.xmpp.client.receiver.ConnectivityReceiver;
+import com.swgis.android.xmpp.client.receiver.NotificationReceiver;
+import com.swgis.android.xmpp.client.receiver.SendPacketReceiver;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -51,7 +56,6 @@ public class NotificationService extends Service {
     private BroadcastReceiver notificationReceiver;
 
     private BroadcastReceiver connectivityReceiver;
-    private  BroadcastReceiver sendMessageReceiver;
     private BroadcastReceiver sendPacketReceiver;
 
     private PhoneStateListener phoneStateListener;
@@ -72,7 +76,6 @@ public class NotificationService extends Service {
         notificationReceiver = new NotificationReceiver();
         connectivityReceiver = new ConnectivityReceiver(this);
         phoneStateListener = new PhoneStateChangeListener(this);
-        sendMessageReceiver = new SendMessageReceiver(this);
         sendPacketReceiver = new SendPacketReceiver(this);
         executorService = Executors.newSingleThreadExecutor();
         taskSubmitter = new TaskSubmitter(this);
@@ -123,6 +126,7 @@ public class NotificationService extends Service {
 
     @Override
     public void onStart(Intent intent, int startId) {
+        registerSendPacketReceiver();
         Log.d(LOGTAG, "onStart()...");
     }
 
@@ -202,23 +206,16 @@ public class NotificationService extends Service {
         filter.addAction(Constants.ACTION_NOTIFICATION_CLEARED);
         registerReceiver(notificationReceiver, filter);
     }
-    private void registerSendMessageReciver()    {
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(Constants.SEND_MESSAGE);
-        registerReceiver(sendMessageReceiver,intentFilter);
-        Log.d(LOGTAG,"registerSendMessageReciver()...");
-    }
     private void registerSendPacketReceiver()
     {
         IntentFilter intentFilter = new IntentFilter();
         intentFilter.addAction(Constants.SEND_PACKET);
+        sendPacketReceiver = new SendPacketReceiver(this);
         registerReceiver(sendPacketReceiver,intentFilter);
     }
     private void unRegisterSendPacketReceiver(){
+        sendPacketReceiver =null;
         unregisterReceiver(sendPacketReceiver);
-    }
-    private void unRegisterSendMessageReceiver(){
-        unregisterReceiver(sendMessageReceiver);
     }
 
     private void unregisterNotificationReceiver() {
@@ -246,12 +243,11 @@ public class NotificationService extends Service {
         Log.d(LOGTAG, "start()...");
         registerNotificationReceiver();
         registerConnectivityReceiver();
-        registerSendMessageReciver();
         registerSendPacketReceiver();
         // Intent intent = getIntent();
         // startService(intent);
         xmppManager.connect();
-        HeartThreadRunnable.setup(xmppManager);
+//        HeartThreadRunnable.setup(xmppManager);
 //        if(xmppManager.getConnection().isConnected()){
 //            xmppManager.getConnection().addPacketListener(new MessagePacketListener((MyApplication)getApplication()),new PacketFilter(){
 //                @Override
@@ -267,7 +263,6 @@ public class NotificationService extends Service {
         Log.d(LOGTAG, "stop()...");
         unregisterNotificationReceiver();
         unregisterConnectivityReceiver();
-        unRegisterSendMessageReceiver();
         unRegisterSendPacketReceiver();
         HeartThreadRunnable.shutDown();
         xmppManager.disconnect();
@@ -311,7 +306,6 @@ public class NotificationService extends Service {
             this.notificationService = notificationService;
             this.count = 0;
         }
-
         public void increase() {
             synchronized (notificationService.getTaskTracker()) {
                 notificationService.getTaskTracker().count++;

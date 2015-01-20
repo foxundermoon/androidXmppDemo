@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/XmppDemo.iml" filepath="$PROJECT_DIR$/XmppDemo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../XmppDemoUI/XmppDemoUI.iml" filepath="$PROJECT_DIR$/../XmppDemoUI/XmppDemoUI.iml" />
       <module fileurl="file://$PROJECT_DIR$/../android.iml" filepath="$PROJECT_DIR$/../android.iml" />
     </modules>
   </component>

@@ -7,6 +7,7 @@ import org.jivesoftware.smack.packet.Packet;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -14,6 +15,7 @@ import java.util.UUID;
  */
 public class MyApplication extends Application {
     public Map<String, Object> shareMap;
+    public  boolean isLogin = false;
     private static MyApplication applicationInstance;
 
     public void sendPacketByXmpp(Packet packet) {
@@ -29,17 +31,19 @@ public class MyApplication extends Application {
         return applicationInstance;
     }
 
-    public void sendBroadcast(String action,String shareMapKey) {
-        Intent intent = new Intent();
-        intent.setAction(action);
-        intent.putExtra(action,shareMapKey);
-        sendBroadcast(intent);
-    }
+//    public void sendBroadcast(String action,String shareMapKey) {
+//        Intent intent = new Intent();
+//        intent.setAction(action);
+//        intent.putExtra(action,shareMapKey);
+//        sendBroadcast(intent);
+//    }
 
     @Override
     public void onCreate() {
         super.onCreate();
         shareMap = new HashMap<String, Object>();
+        Map<String,Objects> xmppStatus = new HashMap<String, Objects>();
+        shareMap.put(Constants.XMPP_STATUS,xmppStatus);
         applicationInstance = this;
     }
 

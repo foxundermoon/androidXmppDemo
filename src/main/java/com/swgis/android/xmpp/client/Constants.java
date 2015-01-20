@@ -77,10 +77,17 @@ public class Constants {
     public static final String ACTION_NOTIFICATION_CLICKED = "org.androidpn.client.NOTIFICATION_CLICKED";
 
     public static final String ACTION_NOTIFICATION_CLEARED = "org.androidpn.client.NOTIFICATION_CLEARED";
+    public static final String ACTION_XMPP_STATUS = "org.androidpn.client.ACTION_XMPP_STATUS";
 
     //share map key or intent action
     public static final String SEND_MESSAGE = "com.swgis.xmpp.SEND_MESSAGE";
     public  static  final String SEND_PACKET = "com.swgis.xmpp.SEND_PACKET";
     public static  final String RECEIVER_MESSAGE = "com.swgis.xmpp.RECEIVER_MESSAGE";
+    public static final String XMPP_STATUS = "com.swgis.xmpp.XMPP_STATUS";
 
+    public static final String XMPP_STATUS_DETAIL = "com.swgis.xmpp.XMPP_STATUS_DETAIL";
+    public static final String SUBSCRIBED = "com.swgis.xmpp.SUBSCRIBED";
+    public static final String SUBSCRIB = "com.swgis.xmpp.SUBSCRIB";
+    public static final String UNSUBSCRID ="com.swgis.xmpp.UNSUBSCRIB" ;
+    public static final String IS_LOGIN = "com.swgis.xmpp.IS_LOGIN";
 }

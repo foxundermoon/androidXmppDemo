@@ -30,6 +30,7 @@ import java.util.Properties;
  * @author Sehwan Noh (devnoh@gmail.com)
  */
 public final class ServiceManager {
+    private static  ServiceManager instance;
 
     private static final String LOGTAG = LogUtil
             .makeLogTag(ServiceManager.class);
@@ -52,7 +53,7 @@ public final class ServiceManager {
 
     private String callbackActivityClassName;
 
-    public ServiceManager(Context context) {
+    private ServiceManager(Context context) {
         this.context = context;
 
         if (context instanceof Activity) {
@@ -90,6 +91,13 @@ public final class ServiceManager {
                 callbackActivityClassName);
         editor.commit();
         // Log.i(LOGTAG, "sharedPrefs=" + sharedPrefs.toString());
+    }
+    public static ServiceManager getInstance(Context context){
+        synchronized (ServiceManager.class){
+            if (null == instance)
+                instance = new ServiceManager(context);
+            return  instance;
+        }
     }
 
     public void startService() {
